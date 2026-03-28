@@ -1,50 +1,45 @@
-# Welcome to your Expo app 👋
+# NutriSnap 🥗
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+An AI-powered nutrition and dietary restriction scanner built with React Native + Expo.
 
-## Get started
+## 📱 Features
 
-1. Install dependencies
+- 🔍 Barcode scanner — scan any food product instantly
+- 🧪 Real ingredient analysis using Open Food Facts API (1M+ products)
+- ✅ Halal / Vegan dietary checker
+- ⚠️ Allergen detection (nuts, dairy, gluten, soy)
+- 📊 Daily calorie tracking dashboard
+- 💾 Persistent meal history with AsyncStorage
+- 🤖 AI-powered ingredient analysis
 
-   ```bash
-   npm install
-   ```
+## 🛠 Tech Stack
 
-2. Start the app
+- React Native + Expo
+- JavaScript / TypeScript
+- Open Food Facts API
+- AsyncStorage
+- Expo Router
+- Groq AI (LLaMA3)
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## 🚀 Getting Started
 
 ```bash
-npm run reset-project
+git clone https://github.com/arabirahmanrafi-svg/NutriSnap.git
+cd NutriSnap
+npm install
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## 📋 Environment Variables
 
-## Learn more
+Create a `.env` file in the root directory:
 
-To learn more about developing your project with Expo, look at the following resources:
+```
+EXPO_PUBLIC_GROQ_KEY=your_groq_api_key
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## 👨‍💻 Author
 
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+**Arabi Rahman Rafi**  
+CS Student @ Eastern Michigan University  
+[GitHub](https://github.com/arabirahmanrafi-svg)
