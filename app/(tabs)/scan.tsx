@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useState } from "react";
+import { useLocalSearchParams } from "expo-router";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -21,6 +22,14 @@ export default function ScanScreen() {
   const [saved, setSaved] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
+
+  const { barcode: scannedBarcode } = useLocalSearchParams();
+
+  useEffect(() => {
+    if (scannedBarcode) {
+      setBarcode(scannedBarcode as string);
+    }
+  }, [scannedBarcode]);
 
   async function searchProduct() {
     if (!barcode) return;
