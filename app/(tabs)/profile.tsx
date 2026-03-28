@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Notifications from "expo-notifications";
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -10,11 +11,20 @@ import {
   View,
 } from "react-native";
 
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
 export default function ProfileScreen() {
   const [selectedDiet, setSelectedDiet] = useState("None");
   const [selectedAllergies, setSelectedAllergies] = useState([]);
   const [calorieGoal, setCalorieGoal] = useState(2000);
   const [darkMode, setDarkMode] = useState(true);
+  const [notificationsOn, setNotificationsOn] = useState(false);
   const [saved, setSaved] = useState(false);
 
   const diets = ["None", "Halal", "Vegan", "Vegetarian", "Keto", "Gluten-Free"];
@@ -43,10 +53,53 @@ export default function ProfileScreen() {
         setSelectedAllergies(profile.allergies || []);
         setCalorieGoal(profile.calorieGoal || 2000);
         setDarkMode(profile.darkMode !== undefined ? profile.darkMode : true);
+        setNotificationsOn(profile.notificationsOn || false);
       }
     } catch (err) {
       console.log("Error loading profile:", err);
     }
+  }
+
+  async function toggleNotifications(value) {
+    setNotificationsOn(value);
+    if (value) {
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission needed",
+          "Please allow notifications in settings.",
+        );
+        setNotificationsOn(false);
+        return;
+      }
+      await scheduleNotification();
+      Alert.alert(
+        "🔔 Notifications On!",
+        "You'll get a daily reminder to log your meals!",
+      );
+    } else {
+      await Notifications.cancelAllScheduledNotificationsAsync();
+      Alert.alert(
+        "🔕 Notifications Off",
+        "Daily reminders have been turned off.",
+      );
+    }
+  }
+
+  async function scheduleNotification() {
+    await Notifications.cancelAllScheduledNotificationsAsync();
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "🥗 NutriSnap Daily Reminder",
+        body: `Don't forget to log your meals! Goal: ${calorieGoal} kcal today.`,
+        sound: true,
+      },
+      trigger: {
+        hour: 12,
+        minute: 0,
+        repeats: true,
+      },
+    });
   }
 
   async function saveProfile() {
@@ -56,6 +109,7 @@ export default function ProfileScreen() {
         allergies: selectedAllergies,
         calorieGoal: calorieGoal,
         darkMode: darkMode,
+        notificationsOn: notificationsOn,
       };
       await AsyncStorage.setItem("userProfile", JSON.stringify(profile));
       setSaved(true);
@@ -83,7 +137,7 @@ export default function ProfileScreen() {
         Personalize your nutrition preferences
       </Text>
 
-      {/* Dark/Light Mode Toggle */}
+      {/* Dark/Light Mode */}
       <View
         style={[
           styles.toggleCard,
@@ -100,6 +154,32 @@ export default function ProfileScreen() {
             onValueChange={setDarkMode}
             trackColor={{ false: "#767577", true: "#00d4aa" }}
             thumbColor={darkMode ? "#ffffff" : "#f4f3f4"}
+          />
+        </View>
+      </View>
+
+      {/* Notifications */}
+      <View
+        style={[
+          styles.toggleCard,
+          { backgroundColor: theme.card, borderColor: theme.border },
+        ]}
+      >
+        <View style={styles.toggleRow}>
+          <Text style={styles.toggleEmoji}>🔔</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.toggleLabel, { color: theme.text }]}>
+              Daily Reminders
+            </Text>
+            <Text style={[styles.toggleSub, { color: theme.subtext }]}>
+              Reminder at 12:00 PM every day
+            </Text>
+          </View>
+          <Switch
+            value={notificationsOn}
+            onValueChange={toggleNotifications}
+            trackColor={{ false: "#767577", true: "#00d4aa" }}
+            thumbColor={notificationsOn ? "#ffffff" : "#f4f3f4"}
           />
         </View>
       </View>
@@ -232,6 +312,12 @@ export default function ProfileScreen() {
             {darkMode ? "Dark" : "Light"}
           </Text>
         </Text>
+        <Text style={[styles.summaryItem, { color: theme.subtext }]}>
+          🔔 Reminders:{" "}
+          <Text style={{ color: theme.accent, fontWeight: "600" }}>
+            {notificationsOn ? "On (12:00 PM daily)" : "Off"}
+          </Text>
+        </Text>
       </View>
 
       {/* Save Button */}
@@ -267,7 +353,7 @@ const styles = StyleSheet.create({
   toggleCard: {
     borderRadius: 15,
     padding: 15,
-    marginBottom: 25,
+    marginBottom: 15,
     borderWidth: 1,
   },
   toggleRow: {
@@ -282,6 +368,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     flex: 1,
+  },
+  toggleSub: {
+    fontSize: 12,
+    marginTop: 2,
   },
   section: {
     marginBottom: 25,
