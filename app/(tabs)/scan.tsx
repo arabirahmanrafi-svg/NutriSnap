@@ -11,12 +11,16 @@ import {
   View,
 } from "react-native";
 
+const GROQ_API_KEY = process.env.EXPO_PUBLIC_GROQ_KEY;
+
 export default function ScanScreen() {
   const [barcode, setBarcode] = useState("");
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
 
   async function searchProduct() {
     if (!barcode) return;
@@ -24,6 +28,7 @@ export default function ScanScreen() {
     setError("");
     setProduct(null);
     setSaved(false);
+    setAiAnalysis("");
     try {
       const response = await fetch(
         `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`,
@@ -31,6 +36,7 @@ export default function ScanScreen() {
       const data = await response.json();
       if (data.status === 1) {
         setProduct(data.product);
+        await analyzeWithAI(data.product);
       } else {
         setError("Product not found. Try another barcode!");
       }
@@ -38,6 +44,59 @@ export default function ScanScreen() {
       setError("Network error. Check your connection!");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function analyzeWithAI(product) {
+    const ingredients =
+      product.ingredients_text ||
+      product.ingredients_text_en ||
+      product.ingredients_text_fr;
+
+    if (!ingredients) {
+      setAiAnalysis("No ingredients data available for this product.");
+      return;
+    }
+
+    setAiLoading(true);
+    try {
+      const response = await fetch(
+        "https://api.groq.com/openai/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${GROQ_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: "llama3-8b-8192",
+            messages: [
+              {
+                role: "user",
+                content: `Analyze these food ingredients in 3 short bullet points:
+1. Is this Halal? (check for pork, alcohol, gelatin)
+2. Is this Vegan? (check for dairy, eggs, meat, honey)
+3. Any major allergens? (nuts, dairy, gluten, soy)
+
+Ingredients: ${ingredients}
+
+Be concise, max 2 sentences per point.`,
+              },
+            ],
+            max_tokens: 200,
+          }),
+        },
+      );
+      const data = await response.json();
+      if (data.choices?.[0]?.message?.content) {
+        setAiAnalysis(data.choices[0].message.content);
+      } else {
+        setAiAnalysis("AI analysis unavailable. Check your API key.");
+      }
+    } catch (err) {
+      setAiAnalysis("Could not connect to AI. Check your internet.");
+    } finally {
+      setAiLoading(false);
     }
   }
 
@@ -162,6 +221,17 @@ export default function ScanScreen() {
                 </>
               );
             })()}
+          </View>
+
+          <View style={styles.aiBox}>
+            <Text style={styles.aiTitle}>🤖 AI Analysis</Text>
+            {aiLoading ? (
+              <ActivityIndicator size="small" color="#00d4aa" />
+            ) : (
+              <Text style={styles.aiText}>
+                {aiAnalysis || "No analysis available."}
+              </Text>
+            )}
           </View>
 
           {product.nutriments && (
@@ -304,6 +374,26 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 13,
     fontWeight: "600",
+  },
+  aiBox: {
+    backgroundColor: "#0f3460",
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: "#00d4aa",
+  },
+  aiTitle: {
+    color: "#00d4aa",
+    fontWeight: "bold",
+    fontSize: 16,
+    marginBottom: 10,
+  },
+  aiText: {
+    color: "#ffffff",
+    fontSize: 14,
+    lineHeight: 22,
+    opacity: 0.9,
   },
   nutritionBox: {
     backgroundColor: "#1a1a2e",
