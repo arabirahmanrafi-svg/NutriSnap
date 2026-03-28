@@ -4,22 +4,29 @@ An AI-powered nutrition and dietary restriction scanner built with React Native 
 
 ## 📱 Features
 
-- 🔍 Barcode scanner — scan any food product instantly
+- 📷 Real-time barcode scanner — point camera at any product
+- 🔍 Manual barcode search — type any barcode number
+- 📸 Photo food recognition — take a photo, AI identifies the food
 - 🧪 Real ingredient analysis using Open Food Facts API (1M+ products)
 - ✅ Halal / Vegan dietary checker
 - ⚠️ Allergen detection (nuts, dairy, gluten, soy)
 - 📊 Daily calorie tracking dashboard
-- 💾 Persistent meal history with AsyncStorage
-- 🤖 AI-powered ingredient analysis
+- 📅 Weekly nutrition report with bar chart
+- 🔔 Daily meal reminders (push notifications)
+- 🌙 Dark / Light mode
+- 💾 Persistent meal history & profile with AsyncStorage
+- 🤖 AI-powered ingredient & photo analysis (Groq LLaMA)
 
 ## 🛠 Tech Stack
 
 - React Native + Expo
 - JavaScript / TypeScript
+- Expo Router (file-based navigation)
 - Open Food Facts API
+- Groq AI (LLaMA 4 Vision + LLaMA 3)
 - AsyncStorage
-- Expo Router
-- Groq AI (LLaMA3)
+- Expo Camera + Image Picker
+- Expo Notifications
 
 ## 🚀 Getting Started
 
@@ -37,6 +44,10 @@ Create a `.env` file in the root directory:
 ```
 EXPO_PUBLIC_GROQ_KEY=your_groq_api_key
 ```
+
+## 📸 Screenshots
+
+Coming soon
 
 ## 👨‍💻 Author
 
