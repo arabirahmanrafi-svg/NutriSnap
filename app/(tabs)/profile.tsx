@@ -1,18 +1,70 @@
-import { useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEffect, useState } from "react";
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 export default function ProfileScreen() {
   const [selectedDiet, setSelectedDiet] = useState("None");
   const [selectedAllergies, setSelectedAllergies] = useState([]);
+  const [calorieGoal, setCalorieGoal] = useState(2000);
+  const [darkMode, setDarkMode] = useState(true);
+  const [saved, setSaved] = useState(false);
 
-  const diets = ["None", "Halal", "Vegan", "Vegetarian"];
+  const diets = ["None", "Halal", "Vegan", "Vegetarian", "Keto", "Gluten-Free"];
   const allergies = ["Nuts", "Dairy", "Gluten", "Soy", "Shellfish", "Eggs"];
+  const calorieOptions = [1500, 1800, 2000, 2200, 2500, 3000];
+
+  const theme = {
+    bg: darkMode ? "#1a1a2e" : "#f0f4f8",
+    card: darkMode ? "#16213e" : "#ffffff",
+    text: darkMode ? "#ffffff" : "#1a1a2e",
+    subtext: darkMode ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.5)",
+    accent: "#00d4aa",
+    border: darkMode ? "#00d4aa30" : "#00d4aa50",
+  };
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  async function loadProfile() {
+    try {
+      const stored = await AsyncStorage.getItem("userProfile");
+      if (stored) {
+        const profile = JSON.parse(stored);
+        setSelectedDiet(profile.diet || "None");
+        setSelectedAllergies(profile.allergies || []);
+        setCalorieGoal(profile.calorieGoal || 2000);
+        setDarkMode(profile.darkMode !== undefined ? profile.darkMode : true);
+      }
+    } catch (err) {
+      console.log("Error loading profile:", err);
+    }
+  }
+
+  async function saveProfile() {
+    try {
+      const profile = {
+        diet: selectedDiet,
+        allergies: selectedAllergies,
+        calorieGoal: calorieGoal,
+        darkMode: darkMode,
+      };
+      await AsyncStorage.setItem("userProfile", JSON.stringify(profile));
+      setSaved(true);
+      Alert.alert("✅ Saved!", "Your profile has been saved successfully!");
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      Alert.alert("Error", "Could not save profile. Try again.");
+    }
+  }
 
   function toggleAllergy(allergy) {
     if (selectedAllergies.includes(allergy)) {
@@ -23,62 +75,176 @@ export default function ProfileScreen() {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.header}>Your Profile</Text>
-      <Text style={styles.subtitle}>Tell us about your dietary needs</Text>
+    <ScrollView style={[styles.container, { backgroundColor: theme.bg }]}>
+      <Text style={[styles.header, { color: theme.accent }]}>
+        👤 Your Profile
+      </Text>
+      <Text style={[styles.subtitle, { color: theme.subtext }]}>
+        Personalize your nutrition preferences
+      </Text>
 
-      <Text style={styles.sectionTitle}>🍽️ Dietary Type</Text>
-      <View style={styles.optionsRow}>
-        {diets.map((diet) => (
-          <TouchableOpacity
-            key={diet}
-            style={[styles.chip, selectedDiet === diet && styles.chipSelected]}
-            onPress={() => setSelectedDiet(diet)}
-          >
-            <Text
-              style={[
-                styles.chipText,
-                selectedDiet === diet && styles.chipTextSelected,
-              ]}
-            >
-              {diet}
-            </Text>
-          </TouchableOpacity>
-        ))}
+      {/* Dark/Light Mode Toggle */}
+      <View
+        style={[
+          styles.toggleCard,
+          { backgroundColor: theme.card, borderColor: theme.border },
+        ]}
+      >
+        <View style={styles.toggleRow}>
+          <Text style={styles.toggleEmoji}>{darkMode ? "🌙" : "☀️"}</Text>
+          <Text style={[styles.toggleLabel, { color: theme.text }]}>
+            {darkMode ? "Dark Mode" : "Light Mode"}
+          </Text>
+          <Switch
+            value={darkMode}
+            onValueChange={setDarkMode}
+            trackColor={{ false: "#767577", true: "#00d4aa" }}
+            thumbColor={darkMode ? "#ffffff" : "#f4f3f4"}
+          />
+        </View>
       </View>
 
-      <Text style={styles.sectionTitle}>⚠️ Allergies</Text>
-      <View style={styles.optionsRow}>
-        {allergies.map((allergy) => (
-          <TouchableOpacity
-            key={allergy}
-            style={[
-              styles.chip,
-              selectedAllergies.includes(allergy) && styles.chipSelected,
-            ]}
-            onPress={() => toggleAllergy(allergy)}
-          >
-            <Text
+      {/* Dietary Type */}
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>
+          🍽️ Dietary Type
+        </Text>
+        <View style={styles.optionsRow}>
+          {diets.map((diet) => (
+            <TouchableOpacity
+              key={diet}
               style={[
-                styles.chipText,
-                selectedAllergies.includes(allergy) && styles.chipTextSelected,
+                styles.chip,
+                { borderColor: theme.accent },
+                selectedDiet === diet && { backgroundColor: theme.accent },
               ]}
+              onPress={() => setSelectedDiet(diet)}
             >
-              {allergy}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Text
+                style={[
+                  styles.chipText,
+                  { color: theme.accent },
+                  selectedDiet === diet && { color: "#1a1a2e" },
+                ]}
+              >
+                {diet}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
 
-      <TouchableOpacity style={styles.saveButton}>
-        <Text style={styles.saveButtonText}>Save Profile ✓</Text>
+      {/* Allergies */}
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>
+          ⚠️ Allergies
+        </Text>
+        <View style={styles.optionsRow}>
+          {allergies.map((allergy) => (
+            <TouchableOpacity
+              key={allergy}
+              style={[
+                styles.chip,
+                { borderColor: theme.accent },
+                selectedAllergies.includes(allergy) && {
+                  backgroundColor: theme.accent,
+                },
+              ]}
+              onPress={() => toggleAllergy(allergy)}
+            >
+              <Text
+                style={[
+                  styles.chipText,
+                  { color: theme.accent },
+                  selectedAllergies.includes(allergy) && { color: "#1a1a2e" },
+                ]}
+              >
+                {allergy}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {/* Calorie Goal */}
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>
+          🎯 Daily Calorie Goal
+        </Text>
+        <View style={styles.optionsRow}>
+          {calorieOptions.map((cal) => (
+            <TouchableOpacity
+              key={cal}
+              style={[
+                styles.chip,
+                { borderColor: theme.accent },
+                calorieGoal === cal && { backgroundColor: theme.accent },
+              ]}
+              onPress={() => setCalorieGoal(cal)}
+            >
+              <Text
+                style={[
+                  styles.chipText,
+                  { color: theme.accent },
+                  calorieGoal === cal && { color: "#1a1a2e" },
+                ]}
+              >
+                {cal}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {/* Summary Card */}
+      <View
+        style={[
+          styles.summaryCard,
+          { backgroundColor: theme.card, borderColor: theme.border },
+        ]}
+      >
+        <Text style={[styles.summaryTitle, { color: theme.accent }]}>
+          📋 Your Settings
+        </Text>
+        <Text style={[styles.summaryItem, { color: theme.subtext }]}>
+          🍽️ Diet:{" "}
+          <Text style={{ color: theme.accent, fontWeight: "600" }}>
+            {selectedDiet}
+          </Text>
+        </Text>
+        <Text style={[styles.summaryItem, { color: theme.subtext }]}>
+          ⚠️ Allergies:{" "}
+          <Text style={{ color: theme.accent, fontWeight: "600" }}>
+            {selectedAllergies.length > 0
+              ? selectedAllergies.join(", ")
+              : "None"}
+          </Text>
+        </Text>
+        <Text style={[styles.summaryItem, { color: theme.subtext }]}>
+          🎯 Goal:{" "}
+          <Text style={{ color: theme.accent, fontWeight: "600" }}>
+            {calorieGoal} kcal/day
+          </Text>
+        </Text>
+        <Text style={[styles.summaryItem, { color: theme.subtext }]}>
+          {darkMode ? "🌙" : "☀️"} Theme:{" "}
+          <Text style={{ color: theme.accent, fontWeight: "600" }}>
+            {darkMode ? "Dark" : "Light"}
+          </Text>
+        </Text>
+      </View>
+
+      {/* Save Button */}
+      <TouchableOpacity
+        style={[styles.saveButton, saved && styles.saveButtonSaved]}
+        onPress={saveProfile}
+      >
+        <Text style={[styles.saveButtonText, saved && { color: "#00d4aa" }]}>
+          {saved ? "✅ Profile Saved!" : "💾 Save Profile"}
+        </Text>
       </TouchableOpacity>
 
-      <Text style={styles.summary}>
-        Diet: {selectedDiet} {"\n"}
-        Allergies:{" "}
-        {selectedAllergies.length > 0 ? selectedAllergies.join(", ") : "None"}
-      </Text>
+      <View style={{ height: 40 }} />
     </ScrollView>
   );
 }
@@ -86,71 +252,89 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1a1a2e",
     padding: 20,
     paddingTop: 60,
   },
   header: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: "bold",
-    color: "#00d4aa",
-    marginBottom: 8,
+    marginBottom: 5,
   },
   subtitle: {
     fontSize: 16,
-    color: "#ffffff",
-    opacity: 0.7,
-    marginBottom: 30,
+    marginBottom: 25,
+  },
+  toggleCard: {
+    borderRadius: 15,
+    padding: 15,
+    marginBottom: 25,
+    borderWidth: 1,
+  },
+  toggleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  toggleEmoji: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  toggleLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    flex: 1,
+  },
+  section: {
+    marginBottom: 25,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "bold",
-    color: "#ffffff",
-    marginBottom: 15,
-    marginTop: 10,
+    marginBottom: 12,
   },
   optionsRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 10,
-    marginBottom: 25,
   },
   chip: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 18,
     paddingVertical: 10,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#00d4aa",
-  },
-  chipSelected: {
-    backgroundColor: "#00d4aa",
   },
   chipText: {
-    color: "#00d4aa",
     fontSize: 14,
     fontWeight: "600",
   },
-  chipTextSelected: {
-    color: "#1a1a2e",
+  summaryCard: {
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+  },
+  summaryTitle: {
+    fontWeight: "bold",
+    fontSize: 16,
+    marginBottom: 12,
+  },
+  summaryItem: {
+    fontSize: 14,
+    marginBottom: 6,
   },
   saveButton: {
     backgroundColor: "#00d4aa",
-    padding: 15,
+    padding: 18,
     borderRadius: 30,
     alignItems: "center",
-    marginTop: 10,
-    marginBottom: 20,
+  },
+  saveButtonSaved: {
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: "#00d4aa",
   },
   saveButtonText: {
     color: "#1a1a2e",
     fontSize: 18,
     fontWeight: "bold",
-  },
-  summary: {
-    color: "#ffffff",
-    opacity: 0.7,
-    fontSize: 14,
-    textAlign: "center",
-    marginBottom: 40,
   },
 });
